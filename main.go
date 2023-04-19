@@ -31,12 +31,12 @@ import (
 var teerandom []byte
 
 const (
-	version         = "0.1.0"
-	commitPubkeyHex = "0x3d14b9f8765c4c2e0a7b77805ebdad50ffbc74a7ee4aa606399693342a25483b" //技术委员会用于发布dcnode升级版本的pubkey
-	dcport          = 6667                                                                 //dc节点监听的升级用固定端口 6667
-	listenPort      = 6666                                                                 //升级辅助程序监听的固定端口6666，供新版本dc节点程序调用
-	DialTimeout     = 10 * time.Second
-	authPath        = "/opt/dcnetio/data/init/auth"
+	version          = "0.1.0"
+	commitBasePubkey = "bhuklt6dwlrgc4ct3o6af5pnnkd73y5fh5zfkmbrzs2jtikrfja5q" //技术委员会用于发布dcnode升级版本的pubkey
+	dcport           = 6667                                                    //dc节点监听的升级用固定端口 6667
+	listenPort       = 6666                                                    //升级辅助程序监听的固定端口6666，供新版本dc节点程序调用
+	DialTimeout      = 10 * time.Second
+	authPath         = "/opt/dcnetio/data/init/auth"
 )
 
 var EnclaveId string
@@ -61,12 +61,12 @@ func main() {
 	}
 	teerandom = randNumber.Bytes()
 	//生成技术委员会的pubkey
-	commitPubkeyHexBytes, err := codec.HexDecodeString(commitPubkeyHex)
+	_, commitPubkeyBytes, err := mbase.Decode(commitBasePubkey)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	cpubkey, err := crypto.UnmarshalEd25519PublicKey(commitPubkeyHexBytes)
+	cpubkey, err := crypto.UnmarshalEd25519PublicKey(commitPubkeyBytes)
 	if err != nil {
 		fmt.Printf("client request secret fail, err: %v\r\n", err)
 		return
@@ -164,7 +164,7 @@ func secretQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid parameter", http.StatusBadRequest)
 		return
 	}
-	reqPubkeyHex := values[0]
+	reqBasePubkey := values[0]
 	values = r.URL.Query()["authSignature"] //授权签名
 	if len(values) == 0 {
 		http.Error(w, "invalid parameter", http.StatusBadRequest)
@@ -199,9 +199,9 @@ func secretQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("secretQuery- invalid requset enclaveid, err: %v\r\n", err), http.StatusBadRequest)
 		return
 	}
-	reqPubkey, err := codec.HexDecodeString(reqPubkeyHex)
+	_, reqPubkey, err := mbase.Decode(reqBasePubkey)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("client request secret fail,HexDecodeString err: %v\r\n", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("client request secret fail,reqBasePubkey err: %v\r\n", err), http.StatusBadRequest)
 		return
 	}
 	cpubkey, err := crypto.UnmarshalEd25519PublicKey([]byte(reqPubkey))
@@ -324,7 +324,10 @@ func taskForNodeSecret() {
 				continue
 			}
 			pub, _ := privKey.GetPublic().Raw()
-			pubkey := codec.HexEncodeToString(pub)
+			basePubkey, err := mbase.Encode(mbase.Base32, pub)
+			if err != nil {
+				return
+			}
 			report, err := enclave.VerifyLocalReport(respBody)
 			if err != nil {
 				fmt.Printf("teereport with teerandom verify fail,  err: %v\r\n", err)
@@ -347,7 +350,7 @@ func taskForNodeSecret() {
 			}
 			//参数：pubkey(验证teereport中report.data的数据为前面获取的随机数hash值的有效签名)，authSignature(验证teereport有效性），teereport(确保基于pubkey对应私钥对随机数的签名不被修改)
 			dcSecretUrl := fmt.Sprintf("http://127.0.0.1:%d/secret", dcport)
-			respBody, err = httpGet(dcSecretUrl, "pubkey="+pubkey, "authSignature="+enclaveIdSignature, "teereport="+encodedReport)
+			respBody, err = httpGet(dcSecretUrl, "pubkey="+basePubkey, "authSignature="+enclaveIdSignature, "teereport="+encodedReport)
 			if err != nil {
 				fmt.Printf("request secret fail,  err: %v\r\n", err)
 				continue
