@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"os"
@@ -225,7 +224,7 @@ func secretQuery(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("client request secret fail, err: %v\r\n", err)
 		return
 	}
-	sealedSecretBytes, err := ioutil.ReadFile(".secret")
+	sealedSecretBytes, err := os.ReadFile(".secret")
 	if err != nil {
 		w.Write([]byte{})
 		fmt.Printf("client request secret fail, err: %v\r\n", err)
@@ -396,7 +395,7 @@ func taskForNodeSecret() {
 				fmt.Printf("seal dcnode secret   fail,  err: %v\r\n", err)
 				continue
 			}
-			err = ioutil.WriteFile(".secret", sealedSecretBytes, 0)
+			err = os.WriteFile(".secret", sealedSecretBytes, 0)
 			if err != nil {
 				fmt.Printf("save sealed dcnode secret to file  fail,  err: %v\r\n", err)
 				continue
@@ -480,7 +479,7 @@ func initAuthSignatureFromConfigfile() bool {
 		fmt.Printf("read auth file err,error: %v\n", err)
 		return false
 	}
-	authSignature, err := ioutil.ReadFile(authPath)
+	authSignature, err := os.ReadFile(authPath)
 	if err != nil {
 		fmt.Printf("read auth file err,error: %v\n", err)
 		return false
