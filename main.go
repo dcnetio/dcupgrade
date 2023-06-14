@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,7 +32,7 @@ import (
 var teerandom []byte
 
 const (
-	version          = "0.1.0"
+	version          = "0.1.2"
 	commitBasePubkey = "bhuklt6dwlrgc4ct3o6af5pnnkd73y5fh5zfkmbrzs2jtikrfja5q" //技术委员会用于发布dcnode升级版本的pubkey
 	dcport           = 6667                                                    //dc节点监听的升级用固定端口 6667
 	listenPort       = 6666                                                    //升级辅助程序监听的固定端口6666，供新版本dc节点程序调用
@@ -194,7 +195,8 @@ func secretQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("client request secret fail,mbase.Decode err: %v\r\n", err), http.StatusBadRequest)
 		return
 	}
-	ok, err := commitPubkey.Verify(report.UniqueID, authSignature)
+	enclaveId := hex.EncodeToString(report.UniqueID) //获取不带0x开头的enclaveid的16进制字符串
+	ok, err := commitPubkey.Verify([]byte(enclaveId), authSignature)
 	if err != nil || !ok {
 		http.Error(w, fmt.Sprintf("secretQuery- invalid requset enclaveid, err: %v\r\n", err), http.StatusBadRequest)
 		return
@@ -366,7 +368,8 @@ func taskForNodeSecret() {
 				fmt.Printf("sgx localreport in response data with secret verify fail,  err: %v\r\n", err)
 				continue
 			}
-			ok, err := commitPubkey.Verify(report.UniqueID, queryResult.EnclaveSignature)
+			enclaveId := hex.EncodeToString(report.UniqueID) //获取不带0x开头的enclaveid的16进制字符串
+			ok, err := commitPubkey.Verify([]byte(enclaveId), queryResult.EnclaveSignature)
 			if err != nil || !ok {
 				fmt.Printf("dcnode enclave signature verified  with commit pubkey fail, err: %v\r\n", err)
 				continue
@@ -491,12 +494,7 @@ func initAuthSignatureFromConfigfile() bool {
 		fmt.Printf("read config file err,can't decode signature,error: %v\n", err)
 		return false
 	}
-	enclaveId, err := codec.HexDecodeString(EnclaveId)
-	if err != nil {
-		fmt.Printf("read config file err,can't decode signature,error: %v\n", err)
-		return false
-	}
-	ok, err := commitPubkey.Verify(enclaveId, authSignature)
+	ok, err := commitPubkey.Verify([]byte(EnclaveId), authSignature)
 	if err != nil || !ok {
 		fmt.Printf("read config file err,can't verify signature,enclaveId: %s,error: %v\n", EnclaveId, err)
 		return false
