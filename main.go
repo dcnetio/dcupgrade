@@ -30,7 +30,7 @@ import (
 var teerandom []byte
 
 const (
-	version          = "0.1.2"
+	version          = "0.1.4"
 	commitBasePubkey = "bhuklt6dwlrgc4ct3o6af5pnnkd73y5fh5zfkmbrzs2jtikrfja5q" //技术委员会用于发布dcnode升级版本的pubkey
 	dcport           = 6667                                                    //dc节点监听的升级用固定端口 6667
 	listenPort       = 6666                                                    //升级辅助程序监听的固定端口6666，供新版本dc节点程序调用
