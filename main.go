@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/ChainSafe/go-schnorrkel"
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"github.com/cosmos/go-bip39"
 	"github.com/dcnetio/gothreads-lib/core/thread"
 	"github.com/edgelesssys/ego/ecrypto"
@@ -448,7 +447,7 @@ func InitEnclaveId() (err error) {
 		fmt.Printf("InitEnclaveId Err:%v\n", err)
 		return err
 	}
-	EnclaveId = codec.HexEncodeToString(selfReport.UniqueID)
+	EnclaveId = hex.EncodeToString(selfReport.UniqueID)
 	return
 }
 
