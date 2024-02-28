@@ -1,0 +1,32 @@
+{
+ "exe": "dcupgrade",
+ "key": "private.pem",
+ "debug": false,
+ "heapSize": 512,
+ "executableHeap": false,
+ "productID": 1,
+ "securityVersion": 1,
+  "mounts": [
+        {
+            "source": "/opt/dcnetio/data",
+            "target": "/opt/dcnetio/data",
+            "type": "hostfs",
+            "readOnly": false
+        },
+        {
+            "target": "/tmp",
+            "type": "memfs"
+        }
+    ],
+ "env":[
+        {
+            "name": "LANG",
+            "fromHost": true
+        },
+        {
+            "name": "PWD",
+            "value": "/opt/dcnetio/data"
+        }
+    ],
+ "files": null
+}
