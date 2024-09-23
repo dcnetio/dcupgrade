@@ -30,7 +30,7 @@ import (
 var teerandom []byte
 
 const (
-	version          = "0.1.7"
+	version          = "0.1.8"
 	commitBasePubkey = "bl3kr5jjklu2iijnmyhz7cy5lz3h5xhrlp7sim54bjhc4v3ztzfdq" //技术委员会用于发布dcnode升级版本的pubkey
 	dcport           = 6667                                                    //dc节点监听的升级用固定端口 6667
 	listenPort       = 6666                                                    //升级辅助程序监听的固定端口6666，供新版本dc节点程序调用
@@ -160,19 +160,19 @@ func secretQuery(w http.ResponseWriter, r *http.Request) {
 	//提取出请求的数据包，包含local teereport，
 	values := r.URL.Query()["pubkey"] //反馈数据用这个pubkey加密
 	if len(values) == 0 {
-		http.Error(w, "invalid parameter", http.StatusBadRequest)
+		http.Error(w, "secretQuery: invalid parameter", http.StatusBadRequest)
 		return
 	}
 	reqBasePubkey := values[0]
 	values = r.URL.Query()["authSignature"] //授权签名
 	if len(values) == 0 {
-		http.Error(w, "invalid parameter", http.StatusBadRequest)
+		http.Error(w, "secretQuery: invalid parameter", http.StatusBadRequest)
 		return
 	}
 	encodeAuthSignature := values[0]
 	values = r.URL.Query()["teereport"] //包含调用本请求前申请的随机数的teereport
 	if len(values) == 0 {
-		http.Error(w, "invalid parameter", http.StatusBadRequest)
+		http.Error(w, "secretQuery: invalid parameter", http.StatusBadRequest)
 		return
 	}
 	encodedReport := values[0]
